@@ -1,0 +1,398 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *, [data-theme=dark], [data-theme=dark] *));
+
+:root {
+  --color-bg-app: #f1f5f9;
+  --color-bg-card: #ffffff;
+  --color-border: #e2e8f0;
+  --color-text-main: #0f172a;
+  --color-text-muted: #64748b;
+}
+
+.dark, [data-theme="dark"] {
+  --color-bg-app: #070d1e;
+  --color-bg-card: #0d162e;
+  --color-border: #18264a;
+  --color-text-main: #f8fafc;
+  --color-text-muted: #94a3b8;
+}
+
+@layer base {
+  html, body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    letter-spacing: -0.011em;
+    font-size: 16px;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-variant-numeric: tabular-nums;
+  }
+
+  html.dark body, html[data-theme="dark"] body {
+    background-color: #070d1e;
+    color: #f8fafc;
+  }
+
+  html.light body, html[data-theme="light"] body {
+    background-color: #f1f5f9;
+    color: #0f172a;
+  }
+
+  /* Prevent iOS input auto-zoom on focus by enforcing 16px min size on inputs */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  /* Smooth momentum scrolling on mobile */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* =========================================================================
+   LIGHT MODE UNIFIED SYSTEM
+   Ensures ALL features (Fleetbase Board, Dashboard KPIs, Trips, Fuel Logs,
+   Expense Reports, Petty Cash, Maintenance, Accounting Export, Files & PODs,
+   Modals, Dropdowns and Tables) share an identical, cohesive, high-contrast light theme.
+   ========================================================================= */
+html.light, html[data-theme="light"] {
+  /* Slate Dark Card & Panel Overrides -> Clean Crisp White */
+  .bg-slate-950,
+  .bg-slate-900,
+  .bg-slate-900\/95,
+  .bg-slate-900\/90,
+  .bg-slate-900\/80,
+  .bg-slate-900\/70,
+  .bg-slate-900\/60,
+  .bg-slate-900\/50,
+  .bg-slate-850,
+  .bg-slate-800,
+  .bg-slate-800\/90,
+  .bg-slate-800\/80,
+  .bg-slate-800\/70,
+  .bg-slate-800\/60,
+  .bg-slate-800\/50,
+  .bg-slate-800\/40,
+  .bg-slate-800\/30,
+  .bg-slate-750,
+  .bg-slate-700 {
+    background-color: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    color: #0f172a !important;
+  }
+
+  /* Fleetbase Dark Navy Primary Cards -> Clean White Cards */
+  .bg-\[\#0e172e\],
+  .bg-\[\#0d162d\],
+  .bg-\[\#0a1124\],
+  .bg-\[\#0b1329\],
+  .bg-\[\#0b1329\]\/95,
+  .bg-\[\#091024\],
+  .bg-\[\#091024\]\/95,
+  .bg-\[\#0B132B\],
+  .bg-\[\#0B142B\],
+  .bg-\[\#111C38\],
+  .bg-\[\#111c38\],
+  .bg-\[\#101933\],
+  .bg-\[\#101A35\] {
+    background-color: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    color: #0f172a !important;
+  }
+
+  /* Fleetbase Secondary Sub-Surfaces & Subheaders -> Soft Slate-50 */
+  .bg-\[\#070d1e\],
+  .bg-\[\#070D1E\],
+  .bg-\[\#081024\],
+  .bg-\[\#121c38\],
+  .bg-\[\#121D3B\],
+  .bg-\[\#131E36\],
+  .bg-\[\#131e3b\],
+  .bg-\[\#131f3d\],
+  .bg-\[\#14203d\],
+  .bg-\[\#162345\],
+  .bg-\[\#162442\],
+  .bg-\[\#18274d\],
+  .bg-\[\#1A284D\],
+  .bg-\[\#1B294F\],
+  .bg-\[\#223566\],
+  .bg-\[\#0c1429\],
+  .bg-\[\#0F1B3B\] {
+    background-color: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+    color: #0f172a !important;
+  }
+
+  /* Sub-cards, inner sections, and table row hover states */
+  .hover\:bg-slate-750\/50:hover,
+  .hover\:bg-slate-750:hover,
+  .hover\:bg-slate-700:hover,
+  .hover\:bg-slate-800:hover,
+  .hover\:bg-\[\#162442\]:hover {
+    background-color: #f1f5f9 !important;
+  }
+
+  /* Truck registration badges in light mode: clear distinct container */
+  span.font-mono.bg-slate-950,
+  span.font-mono.bg-slate-900,
+  span.font-mono.bg-\[\#070d1e\] {
+    background-color: #eff6ff !important;
+    color: #1e3a8a !important;
+    border-color: #bfdbfe !important;
+  }
+
+  /* All Dark Borders Mapped to Clean Subtle Slate Border */
+  .border-slate-800,
+  .border-slate-800\/80,
+  .border-slate-800\/60,
+  .border-slate-800\/40,
+  .border-slate-750,
+  .border-slate-700,
+  .border-slate-700\/80,
+  .border-slate-700\/60,
+  .border-slate-700\/50,
+  .border-slate-700\/40,
+  .border-\[\#162345\],
+  .border-\[\#18264A\],
+  .border-\[\#19274a\],
+  .border-\[\#1A2748\],
+  .border-\[\#1a284c\],
+  .border-\[\#1a294d\],
+  .border-\[\#1b2a4f\],
+  .border-\[\#1b2b4f\],
+  .border-\[\#1C2A4D\],
+  .border-\[\#1c2c52\],
+  .border-\[\#1C2C54\],
+  .border-\[\#1d2d54\],
+  .border-\[\#1d2d57\],
+  .border-\[\#1e2e54\],
+  .border-\[\#1F2E52\],
+  .border-\[\#213460\],
+  .border-\[\#223563\] {
+    border-color: #e2e8f0 !important;
+  }
+
+  /* Inputs, selects, and textareas: Clean White with Slate-300 border */
+  input,
+  select,
+  textarea {
+    background-color: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: #94a3b8 !important;
+  }
+  select option {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  /* Headings & Text Color Consistency */
+  h1:not(.text-white-force),
+  h2:not(.text-white-force),
+  h3:not(.text-white-force),
+  h4:not(.text-white-force),
+  h5:not(.text-white-force),
+  h6:not(.text-white-force) {
+    color: #0f172a !important;
+  }
+
+  .text-slate-200,
+  .text-slate-300 {
+    color: #334155 !important;
+  }
+  .text-slate-400 {
+    color: #64748b !important;
+  }
+  .text-slate-500 {
+    color: #64748b !important;
+  }
+
+  /* When an element specifies text-white, in light mode make it dark UNLESS inside a button */
+  :not(button):not(a):not(.btn-colored):not([role="button"]) > .text-white {
+    color: #0f172a !important;
+  }
+  div > .text-white:not(button *):not(a *) {
+    color: #0f172a !important;
+  }
+
+  /* Tables in Light Mode */
+  table thead,
+  table thead tr,
+  table thead th {
+    background-color: #f1f5f9 !important;
+    color: #334155 !important;
+    border-color: #e2e8f0 !important;
+    font-weight: 700 !important;
+  }
+  table tbody tr {
+    border-color: #e2e8f0 !important;
+  }
+  table tbody tr:hover {
+    background-color: #f8fafc !important;
+  }
+  table td {
+    border-color: #e2e8f0 !important;
+    color: #0f172a !important;
+  }
+
+  /* Modal Backdrop remains darkened overlay so the modal dialog stands out */
+  .fixed.inset-0.bg-black\/85,
+  .fixed.inset-0.bg-black\/80,
+  .fixed.inset-0.bg-black\/75,
+  .fixed.inset-0.bg-black\/70 {
+    background-color: rgba(15, 23, 42, 0.75) !important;
+  }
+
+  /* Modal header */
+  .border-b.bg-slate-800\/60,
+  .border-b.bg-slate-800\/50,
+  .border-b.bg-slate-800 {
+    background-color: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+  }
+}
+
+/* =========================================================================
+   BUTTON CONTRAST ENFORCEMENT (Both Light and Dark Mode)
+   Prevents accidental dark text on colored primary/action buttons
+   ========================================================================= */
+button.bg-blue-600, button.bg-blue-600 *,
+button.bg-blue-500, button.bg-blue-500 *,
+button.bg-emerald-600, button.bg-emerald-600 *,
+button.bg-cyan-600, button.bg-cyan-600 *,
+button.bg-rose-600, button.bg-rose-600 *,
+button.bg-indigo-600, button.bg-indigo-600 *,
+button.bg-purple-600, button.bg-purple-600 *,
+a.bg-cyan-600, a.bg-cyan-600 *,
+a.bg-blue-600, a.bg-blue-600 *,
+.btn-primary, .btn-primary * {
+  color: #ffffff !important;
+}
+
+button.bg-amber-500, button.bg-amber-500 *,
+button.bg-amber-400, button.bg-amber-400 *,
+button.from-amber-500, button.from-amber-500 * {
+  color: #0f172a !important;
+}
+
+/* =========================================================================
+   DARK MODE ENFORCEMENT
+   ========================================================================= */
+html.dark, html[data-theme="dark"] {
+  /* In dark mode, ensure input text and options are clearly legible */
+  input,
+  select,
+  textarea {
+    color: #f8fafc;
+  }
+  select option {
+    background-color: #0b132b;
+    color: #f8fafc;
+  }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.dark ::-webkit-scrollbar-track, [data-theme="dark"] ::-webkit-scrollbar-track {
+  background: #0B132B;
+}
+.light ::-webkit-scrollbar-track, [data-theme="light"] ::-webkit-scrollbar-track {
+  background: #E2E8F0;
+}
+.dark ::-webkit-scrollbar-thumb, [data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #1E293B;
+  border-radius: 9999px;
+}
+.light ::-webkit-scrollbar-thumb, [data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: #94A3B8;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3B82F6;
+}
+
+/* Safe area padding utilities */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 16px);
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* =========================================================================
+   FLUID WINDOW & VIEW TRANSITIONS
+   Silky 60fps transitions between dashboard views, tabs and modals
+   ========================================================================= */
+@keyframes viewEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes modalEnter {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  0% {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-view-enter {
+  animation: viewEnter 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-modal-enter {
+  animation: modalEnter 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-right {
+  animation: slideInRight 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Compliance with prefers-reduced-motion per Frontend Design Constitution */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
