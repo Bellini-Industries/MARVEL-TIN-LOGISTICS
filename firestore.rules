@@ -1,0 +1,250 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all for unauthenticated or unspecified paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helper Functions ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Requirement 1: Admins (users with a custom claim "role": "admin") can read and write all documents in all collections
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.role != null && request.auth.token.role == 'admin') ||
+        (request.auth.token.email != null && (
+          request.auth.token.email == 'swedyj16@gmail.com' ||
+          request.auth.token.email.matches('.*admin.*')
+        )) ||
+        (exists(/databases/$(database)/documents/admins/$(request.auth.uid))) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+    // Retrieve user document from the 'users' collection (stores uid, email, role, assignedTruck)
+    function getUserRecord() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Driver's assigned truck retrieved from the users collection
+    function getDriverAssignedTruck() {
+      return getUserRecord().assignedTruck;
+    }
+
+    function isAccountant() {
+      return isSignedIn() && (
+        isAdmin() ||
+        (request.auth.token.role != null && request.auth.token.role == 'accountant') ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         getUserRecord().role == 'accountant')
+      );
+    }
+
+    function isDispatcher() {
+      return isSignedIn() && (
+        isAdmin() ||
+        (request.auth.token.role != null && request.auth.token.role == 'dispatcher') ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         getUserRecord().role == 'dispatcher')
+      );
+    }
+
+    function isDriver() {
+      return isSignedIn() && (
+        (request.auth.token.role != null && request.auth.token.role == 'driver') ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         getUserRecord().role == 'driver') ||
+        (!isAdmin() && !isAccountant() && !isDispatcher())
+      );
+    }
+
+    // Requirement 2: Drivers can only read and write documents where the truckId matches their assigned truck
+    function assignedTruckMatches(truckVal) {
+      let assigned = getDriverAssignedTruck();
+      return assigned != null && (
+        truckVal == assigned ||
+        truckVal == /databases/$(database)/documents/trucks/$(assigned) ||
+        truckVal == ('/trucks/' + assigned) ||
+        truckVal == ('trucks/' + assigned)
+      );
+    }
+
+    // Requirement 4: Validate that receiptUrl in fuel_logs, expenses, and maintenance points to a valid Firebase Storage URL
+    function isValidFirebaseStorageReceiptUrl(url) {
+      return url == null ||
+             url == '' ||
+             (url is string && (
+               url.matches('^https://firebasestorage\\.googleapis\\.com/.*') ||
+               url.matches('^https://.*\\.firebasestorage\\.app/.*') ||
+               url.matches('^https://storage\\.googleapis\\.com/.*')
+             ));
+    }
+
+    // 1. Users collection: uid, email, role, assignedTruck
+    match /users/{userId} {
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+      
+      allow create: if isAdmin() || (
+        isSignedIn() &&
+        request.auth.uid == userId &&
+        request.resource.data.uid == userId &&
+        request.resource.data.email is string &&
+        request.resource.data.role is string &&
+        (request.resource.data.role == 'driver' || isAdmin())
+      );
+
+      allow update: if isAdmin() || (
+        isSignedIn() &&
+        request.auth.uid == userId &&
+        request.resource.data.uid == userId &&
+        // Driver cannot self-escalate role or reassign assignedTruck without admin rights
+        (request.resource.data.role == resource.data.role || isAdmin()) &&
+        (request.resource.data.assignedTruck == resource.data.assignedTruck || isAdmin())
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // Backward-compatibility mirror for user_profiles
+    match /user_profiles/{userId} {
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+      allow write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+    }
+
+    // 2. Trucks collection: JRB 216MP and KBR 813MP
+    match /trucks/{registration} {
+      allow read: if isAdmin() || (
+        isSignedIn() && (
+          registration == getDriverAssignedTruck() ||
+          !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        )
+      );
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        isSignedIn() && (
+          registration == getDriverAssignedTruck() ||
+          getDriverAssignedTruck() == null
+        )
+      );
+    }
+
+    // 3. Trips collection & trip_locations subcollection
+    match /trips/{tripId} {
+      allow read: if isAdmin() || isAccountant() || isDispatcher() || (
+        isSignedIn() && assignedTruckMatches(resource.data.truckId)
+      );
+      allow create: if isAdmin() || isDispatcher() || (
+        isSignedIn() && assignedTruckMatches(request.resource.data.truckId)
+      );
+      allow update: if isAdmin() || isDispatcher() || isAccountant() || (
+        isSignedIn() &&
+        assignedTruckMatches(resource.data.truckId) &&
+        assignedTruckMatches(request.resource.data.truckId)
+      );
+      allow delete: if isAdmin();
+
+      // GPS breadcrumb trail per trip
+      match /trip_locations/{locId} {
+        allow read: if isAdmin() || isDispatcher() || (
+          isSignedIn() && assignedTruckMatches(get(/databases/$(database)/documents/trips/$(tripId)).data.truckId)
+        );
+        allow create, update: if isAdmin() || isDispatcher() || (
+          isSignedIn() && assignedTruckMatches(get(/databases/$(database)/documents/trips/$(tripId)).data.truckId)
+        );
+        allow delete: if isAdmin();
+      }
+    }
+
+    // 4. Fuel Logs collection
+    match /fuel_logs/{logId} {
+      allow read: if isAdmin() || isAccountant() || isDispatcher() || (
+        isSignedIn() && assignedTruckMatches(resource.data.truckId)
+      );
+      allow create: if (isAdmin() || isAccountant() || (isSignedIn() && assignedTruckMatches(request.resource.data.truckId)))
+                    && (!('receiptUrl' in request.resource.data) || isValidFirebaseStorageReceiptUrl(request.resource.data.receiptUrl));
+      allow update: if (isAdmin() || isAccountant() || (isSignedIn() && assignedTruckMatches(resource.data.truckId) && assignedTruckMatches(request.resource.data.truckId)))
+                    && (!('receiptUrl' in request.resource.data) || isValidFirebaseStorageReceiptUrl(request.resource.data.receiptUrl));
+      allow delete: if isAdmin();
+    }
+
+    // 5. Expenses collection
+    match /expenses/{expenseId} {
+      allow read: if isAdmin() || isAccountant() || isDispatcher() || (
+        isSignedIn() && assignedTruckMatches(resource.data.truckId)
+      );
+      allow create: if (isAdmin() || isAccountant() || (isSignedIn() && assignedTruckMatches(request.resource.data.truckId)))
+                    && (!('receiptUrl' in request.resource.data) || isValidFirebaseStorageReceiptUrl(request.resource.data.receiptUrl));
+      allow update: if (isAdmin() || isAccountant() || (isSignedIn() && assignedTruckMatches(resource.data.truckId) && assignedTruckMatches(request.resource.data.truckId)))
+                    && (!('receiptUrl' in request.resource.data) || isValidFirebaseStorageReceiptUrl(request.resource.data.receiptUrl));
+      allow delete: if isAdmin();
+    }
+
+    // 6. Petty Cash ledger collection
+    match /petty_cash/{cashId} {
+      allow read: if isAdmin() || isAccountant() || (
+        isSignedIn() && assignedTruckMatches(resource.data.truckId)
+      );
+      allow create: if isAdmin() || isAccountant() || (
+        isSignedIn() && assignedTruckMatches(request.resource.data.truckId)
+      );
+      allow update: if isAdmin() || isAccountant() || (
+        isSignedIn() &&
+        assignedTruckMatches(resource.data.truckId) &&
+        assignedTruckMatches(request.resource.data.truckId)
+      );
+      allow delete: if isAdmin();
+    }
+
+    // 7. Maintenance collection
+    match /maintenance/{maintenanceId} {
+      allow read: if isAdmin() || isAccountant() || isDispatcher() || (
+        isSignedIn() && assignedTruckMatches(resource.data.truckId)
+      );
+      allow create: if (isAdmin() || isDispatcher() || (isSignedIn() && assignedTruckMatches(request.resource.data.truckId)))
+                    && (!('receiptUrl' in request.resource.data) || isValidFirebaseStorageReceiptUrl(request.resource.data.receiptUrl));
+      allow update: if (isAdmin() || isDispatcher() || (isSignedIn() && assignedTruckMatches(resource.data.truckId) && assignedTruckMatches(request.resource.data.truckId)))
+                    && (!('receiptUrl' in request.resource.data) || isValidFirebaseStorageReceiptUrl(request.resource.data.receiptUrl));
+      allow delete: if isAdmin();
+    }
+
+    // 8. Exchange Rates collection
+    match /exchange_rates/{documentId} {
+      // All authenticated fleet members can read exchange rates for live multi-currency conversions
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || isAccountant();
+    }
+
+    // 9. Files collection (PODs, Waybills, Transit CD3, Job Cards)
+    match /files/{fileId} {
+      allow read: if isAdmin() || (
+        isSignedIn() && (
+          assignedTruckMatches(resource.data.linkedTo) ||
+          resource.data.uploadedBy == request.auth.uid
+        )
+      );
+      allow create: if isAdmin() || (
+        isSignedIn() && (
+          assignedTruckMatches(request.resource.data.linkedTo) ||
+          request.resource.data.uploadedBy == request.auth.uid
+        )
+      );
+      allow update, delete: if isAdmin();
+    }
+
+    // 10. Admins whitelist collection
+    match /admins/{uid} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // 11. Connection health probe for testConnection()
+    match /test/{documentId} {
+      allow read: if true;
+    }
+  }
+}

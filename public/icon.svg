@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="fleetGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6" />
+      <stop offset="100%" stop-color="#1D4ED8" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#fleetGrad)" />
+  <!-- Folded Fleetbase wave geometric emblem with truck silhouette -->
+  <path d="M128 320 L224 160 L320 320 Z" fill="#FFFFFF" fill-opacity="0.95" />
+  <path d="M224 160 L384 160 L288 320 Z" fill="#93C5FD" />
+  <circle cx="200" cy="360" r="28" fill="#FFFFFF" />
+  <circle cx="312" cy="360" r="28" fill="#FFFFFF" />
+  <rect x="156" y="270" width="200" height="40" rx="8" fill="#FFFFFF" fill-opacity="0.9" />
+</svg>

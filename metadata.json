@@ -1,0 +1,6 @@
+{
+  "name": "MARVEL TIN S.A/ZIM Fleet",
+  "description": "Logistics and fleet management platform for MARVEL TIN S.A/ZIM with real-time tracking, trip logs, fuel management, petty cash, maintenance, and multi-currency operations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

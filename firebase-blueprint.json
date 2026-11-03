@@ -1,0 +1,459 @@
+{
+  "entities": {
+    "Truck": {
+      "title": "Truck",
+      "description": "A fleet truck belonging to MARVEL TIN S.A/ZIM",
+      "type": "object",
+      "properties": {
+        "registration": {
+          "type": "string",
+          "description": "Unique truck registration plate number",
+          "maxLength": 30
+        },
+        "driver": {
+          "type": "string",
+          "description": "Primary driver assigned to this truck",
+          "maxLength": 100
+        },
+        "make": {
+          "type": "string",
+          "description": "Manufacturer and model (e.g., Scania R500, Volvo FH16)",
+          "maxLength": 100
+        },
+        "status": {
+          "type": "string",
+          "description": "Current truck status",
+          "enum": ["active", "maintenance", "inactive"]
+        },
+        "currentLocation": {
+          "type": "object",
+          "description": "Firestore GeoPoint coordinate representation"
+        },
+        "lastPing": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of the last telemetry or driver update"
+        }
+      },
+      "required": ["registration", "driver", "make", "status"]
+    },
+    "Trip": {
+      "title": "Trip",
+      "description": "A freight transit route trip for a truck",
+      "type": "object",
+      "properties": {
+        "truckId": {
+          "type": "string",
+          "description": "Reference path to the truck document"
+        },
+        "driver": {
+          "type": "string",
+          "description": "Driver executing the trip",
+          "maxLength": 100
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Trip departure timestamp"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Trip completion timestamp or estimated arrival"
+        },
+        "origin": {
+          "type": "string",
+          "description": "Trip origin location/city",
+          "maxLength": 150
+        },
+        "destination": {
+          "type": "string",
+          "description": "Trip destination location/city",
+          "maxLength": 150
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the trip",
+          "enum": ["in_progress", "completed", "cancelled"]
+        }
+      },
+      "required": ["truckId", "driver", "origin", "destination", "status"]
+    },
+    "FuelLog": {
+      "title": "FuelLog",
+      "description": "Fuel refill entry for a truck and trip",
+      "type": "object",
+      "properties": {
+        "truckId": {
+          "type": "string",
+          "description": "Reference to the truck"
+        },
+        "tripId": {
+          "type": "string",
+          "description": "Reference to the trip"
+        },
+        "litres": {
+          "type": "number",
+          "description": "Litres of diesel filled"
+        },
+        "stationName": {
+          "type": "string",
+          "description": "Name of filling station (e.g., Puma, Engen, Total, Shell)",
+          "maxLength": 150
+        },
+        "location": {
+          "type": "string",
+          "description": "City or border post location",
+          "maxLength": 150
+        },
+        "cost": {
+          "type": "number",
+          "description": "Total purchase cost"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency of payment (USD, ZAR, BWP, ZMW)",
+          "maxLength": 10
+        },
+        "receiptUrl": {
+          "type": "string",
+          "description": "URL or storage reference of receipt image",
+          "maxLength": 500
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of fueling"
+        }
+      },
+      "required": ["truckId", "litres", "stationName", "cost", "currency"]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "Operational transit expense incurred during trip",
+      "type": "object",
+      "properties": {
+        "truckId": {
+          "type": "string",
+          "description": "Reference to the truck"
+        },
+        "tripId": {
+          "type": "string",
+          "description": "Reference to the trip"
+        },
+        "category": {
+          "type": "string",
+          "description": "Expense category",
+          "enum": ["tollgate", "seal", "tracker", "other"]
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the expense item",
+          "maxLength": 250
+        },
+        "amount": {
+          "type": "number",
+          "description": "Monetary cost amount"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency (USD, ZAR, BWP, ZMW)",
+          "maxLength": 10
+        },
+        "receiptUrl": {
+          "type": "string",
+          "description": "Receipt attachment link",
+          "maxLength": 500
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of the transaction"
+        }
+      },
+      "required": ["truckId", "category", "amount", "currency", "description"]
+    },
+    "PettyCash": {
+      "title": "PettyCash",
+      "description": "Float balance record or deduction for driver expenses",
+      "type": "object",
+      "properties": {
+        "truckId": {
+          "type": "string",
+          "description": "Reference to the truck"
+        },
+        "tripId": {
+          "type": "string",
+          "description": "Reference to the trip"
+        },
+        "type": {
+          "type": "string",
+          "description": "Top-up or expense deduction",
+          "enum": ["top_up", "expense_deduction"]
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount disbursed or deducted"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency code",
+          "maxLength": 10
+        },
+        "balanceAfter": {
+          "type": "number",
+          "description": "Running petty cash balance after this transaction"
+        },
+        "linkedExpenseId": {
+          "type": "string",
+          "description": "Optional reference to an expense record"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of transaction"
+        }
+      },
+      "required": ["truckId", "type", "amount", "currency", "balanceAfter"]
+    },
+    "Maintenance": {
+      "title": "Maintenance",
+      "description": "Truck servicing, tyre repairs, mechanical repairs",
+      "type": "object",
+      "properties": {
+        "truckId": {
+          "type": "string",
+          "description": "Reference to the truck"
+        },
+        "tripId": {
+          "type": "string",
+          "description": "Reference to the trip"
+        },
+        "description": {
+          "type": "string",
+          "description": "Service or repair details",
+          "maxLength": 300
+        },
+        "cost": {
+          "type": "number",
+          "description": "Cost of maintenance"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency used for payment",
+          "maxLength": 10
+        },
+        "receiptUrl": {
+          "type": "string",
+          "description": "Attachment link for invoice or job card",
+          "maxLength": 500
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of maintenance action"
+        }
+      },
+      "required": ["truckId", "description", "cost", "currency"]
+    },
+    "ExchangeRates": {
+      "title": "ExchangeRates",
+      "description": "Exchange rates for Southern African corridor conversions",
+      "type": "object",
+      "properties": {
+        "ZAR_USD": {
+          "type": "number",
+          "description": "South African Rand to USD rate (e.g. 0.055)"
+        },
+        "BWP_ZAR": {
+          "type": "number",
+          "description": "Botswana Pula to ZAR rate (e.g. 1.35)"
+        },
+        "ZMW_ZAR": {
+          "type": "number",
+          "description": "Zambian Kwacha to ZAR rate (e.g. 0.65)"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of rate update"
+        }
+      },
+      "required": ["ZAR_USD", "BWP_ZAR", "ZMW_ZAR"]
+    },
+    "FileRecord": {
+      "title": "FileRecord",
+      "description": "Logistics document, POD, customs declaration, or invoice",
+      "type": "object",
+      "properties": {
+        "fileName": {
+          "type": "string",
+          "description": "Name of the file",
+          "maxLength": 200
+        },
+        "downloadUrl": {
+          "type": "string",
+          "description": "Web-accessible URL or base64 data URI",
+          "maxLength": 500000
+        },
+        "fileType": {
+          "type": "string",
+          "description": "MIME type or file category (e.g. pdf, image/jpeg, pod, customs)",
+          "maxLength": 50
+        },
+        "storagePath": {
+          "type": "string",
+          "description": "Storage or logical path",
+          "maxLength": 300
+        },
+        "linkedTo": {
+          "type": "string",
+          "description": "Reference to truck or trip document"
+        },
+        "uploadedBy": {
+          "type": "string",
+          "description": "User or driver who uploaded the document",
+          "maxLength": 100
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Upload timestamp"
+        }
+      },
+      "required": ["fileName", "downloadUrl", "fileType", "storagePath", "uploadedBy"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Authorized administrator user mapping",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "description": "Admin email address"
+        },
+        "role": {
+          "type": "string",
+          "description": "Admin level"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["email", "role"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile with uid, email, role, and assigned truck registration",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth User ID"
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin", "accountant", "dispatcher", "driver"],
+          "description": "Access role: admin, accountant, dispatcher, or driver"
+        },
+        "assignedTruck": {
+          "type": "string",
+          "description": "Registration of the assigned truck (e.g. JRB 216MP or KBR 813MP)"
+        },
+        "name": {
+          "type": "string",
+          "description": "User display name"
+        },
+        "assignedDriverName": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Driver, Accountant, Dispatcher, or Admin user record with assigned truck registration",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin", "accountant", "dispatcher", "driver"]
+        },
+        "assignedTruck": {
+          "type": "string",
+          "description": "Registration of the assigned truck (JRB 216MP or KBR 813MP)"
+        },
+        "assignedDriverName": {
+          "type": "string",
+          "description": "Driver name (Tichaona or Anthony)"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["email", "role"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User records mapping authentication UID to role and assignedTruck"
+    },
+    "/trucks/{registration}": {
+      "schema": { "$ref": "#/entities/Truck" },
+      "description": "Fleet trucks identified by registration (JRB 216MP, KBR 813MP)"
+    },
+    "/trips/{tripId}": {
+      "schema": { "$ref": "#/entities/Trip" },
+      "description": "Dispatch and delivery trips for trucks"
+    },
+    "/fuel_logs/{logId}": {
+      "schema": { "$ref": "#/entities/FuelLog" },
+      "description": "Fuel purchases along cross-border corridors"
+    },
+    "/expenses/{expenseId}": {
+      "schema": { "$ref": "#/entities/Expense" },
+      "description": "Tollgates, seals, tracker fees, and miscellaneous route expenses"
+    },
+    "/petty_cash/{cashId}": {
+      "schema": { "$ref": "#/entities/PettyCash" },
+      "description": "Driver petty cash float entries and deduction audits"
+    },
+    "/maintenance/{maintenanceId}": {
+      "schema": { "$ref": "#/entities/Maintenance" },
+      "description": "Repairs, mechanical checks, tyres, and servicing"
+    },
+    "/exchange_rates/latest": {
+      "schema": { "$ref": "#/entities/ExchangeRates" },
+      "description": "Exchange rates for ZAR, USD, BWP, and ZMW"
+    },
+    "/files/{fileId}": {
+      "schema": { "$ref": "#/entities/FileRecord" },
+      "description": "Waybills, customs clearance, PODs, and receipts"
+    },
+    "/admins/{uid}": {
+      "schema": { "$ref": "#/entities/Admin" },
+      "description": "Designated fleet management administrators"
+    },
+    "/user_profiles/{uid}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profiles mapping auth UIDs to roles and assigned trucks"
+    }
+  }
+}
